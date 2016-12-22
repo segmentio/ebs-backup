@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/tj/go-sync/semaphore"
@@ -126,7 +127,7 @@ func (e *Engine) backup(v *ec2.Volume) Result {
 	}
 
 	for _, s := range snapshots {
-		if *s.State == "PENDING" {
+		if strings.ToLower(*s.State) == "pending" {
 			res.Err = errors.New("volume has a snapshot in pending state")
 			return res
 		}
