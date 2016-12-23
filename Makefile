@@ -1,5 +1,5 @@
 
 test:
-	@go test ./internal/...
+	@go test --cover --race ./internal/...
 
 .PHONY: test

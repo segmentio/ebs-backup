@@ -189,6 +189,7 @@ func (e *Engine) snapshots(id string) ([]*ec2.Snapshot, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return resp.Snapshots, nil
 }
 
