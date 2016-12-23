@@ -143,19 +143,6 @@ func (e *Engine) backup(v *ec2.Volume) Result {
 	res.CreatedSnapshot = *s.SnapshotId
 	snapshots = append(snapshots, s)
 
-	if len(snapshots) > e.Limit {
-		set := byTime(snapshots)
-		sort.Sort(set)
-
-		ids, err := e.delete(set[e.Limit:])
-		if err != nil {
-			res.Err = err
-			return res
-		}
-
-		res.DeletedSnapshots = ids
-	}
-
 	if e.CopyTags {
 		_, err := e.EC2.CreateTags(&ec2.CreateTagsInput{
 			Resources: []*string{s.SnapshotId},
@@ -167,6 +154,19 @@ func (e *Engine) backup(v *ec2.Volume) Result {
 		}
 
 		res.CopiedTags = true
+	}
+
+	if len(snapshots) > e.Limit {
+		set := byTime(snapshots)
+		sort.Sort(set)
+
+		ids, err := e.delete(set[e.Limit:])
+		if err != nil {
+			res.Err = err
+			return res
+		}
+
+		res.DeletedSnapshots = ids
 	}
 
 	return res
