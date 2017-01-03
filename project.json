@@ -1,0 +1,5 @@
+{
+  "name": "ebs-backup",
+  "description": "backup ebs volumes",
+  "role": "_"
+}
