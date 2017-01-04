@@ -2,30 +2,44 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/apex/go-apex"
+	"github.com/apex/log"
+	"github.com/apex/log/handlers/logfmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/segmentio/ebs-backup/internal/engine"
-	"github.com/segmentio/go-env"
 )
 
-var (
-	version  = "v0.0.0"
-	name     = env.MustGet("VOLUME_NAME")
-	device   = env.MustGet("VOLUME_DEVICE")
-	limit    = parseInt("SNAPSHOT_LIMIT")
-	copyTags = parseBool("COPY_TAGS")
+const (
+	version = "v0.0.0"
 )
+
+var env = []string{
+	"VOLUME_NAME",
+	"VOLUME_DEVICE",
+	"SNAPSHOT_LIMIT",
+	"COPY_TAGS",
+}
+
+func init() {
+	log.SetHandler(logfmt.New(os.Stderr))
+	log.SetLevel(log.InfoLevel)
+}
 
 func main() {
-	e := engine.New(engine.Config{
-		Name:     name,
-		Device:   device,
-		Limit:    limit,
-		CopyTags: copyTags,
-	})
-
 	apex.HandleFunc(func(_ json.RawMessage, _ *apex.Context) (interface{}, error) {
+		c, err := config()
+		if err != nil {
+			return nil, err
+		}
+
+		e := engine.New(c)
+
 		results, err := e.Run()
 		if err != nil {
 			return nil, err
@@ -41,20 +55,49 @@ func main() {
 	})
 }
 
-func parseInt(key string) int {
-	v, err := strconv.Atoi(env.MustGet(key))
-	if err != nil {
-		panic("$" + key + ": " + err.Error())
+func config() (c engine.Config, err error) {
+	for _, name := range env {
+		if v := os.Getenv(name); v == "" {
+			return c, fmt.Errorf("$%s env var is empty", name)
+		}
 	}
 
-	return v
+	limit, err := parseInt("SNAPSHOT_LIMIT")
+	if err != nil {
+		return c, err
+	}
+
+	copytags, err := parseBool("COPY_TAGS")
+	if err != nil {
+		return c, err
+	}
+
+	if limit < 1 {
+		return c, fmt.Errorf("$SNAPSHOT_LIMIT must be more than 1")
+	}
+
+	c.EC2 = ec2.New(session.New(aws.NewConfig()))
+	c.Name = os.Getenv("VOLUME_NAME")
+	c.Device = os.Getenv("VOLUME_DEVICE")
+	c.Limit = limit
+	c.CopyTags = copytags
+	return c, nil
 }
 
-func parseBool(key string) bool {
-	b, err := strconv.ParseBool(env.MustGet(key))
+func parseInt(key string) (int, error) {
+	v, err := strconv.Atoi(os.Getenv(key))
 	if err != nil {
-		panic("$" + key + ": " + err.Error())
+		return -1, fmt.Errorf("$%s : %s", key, err)
 	}
 
-	return b
+	return v, nil
+}
+
+func parseBool(key string) (bool, error) {
+	v, err := strconv.ParseBool(os.Getenv(key))
+	if err != nil {
+		return false, fmt.Errorf("$%s : %s", key, err)
+	}
+
+	return v, nil
 }
