@@ -26,7 +26,18 @@ func main() {
 	})
 
 	apex.HandleFunc(func(_ json.RawMessage, _ *apex.Context) (interface{}, error) {
-		return e.Run()
+		results, err := e.Run()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, res := range results {
+			if res.Err != nil {
+				return nil, res.Err
+			}
+		}
+
+		return results, nil
 	})
 }
 
