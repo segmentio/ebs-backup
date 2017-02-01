@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/tj/go-sync/semaphore"
 )
@@ -64,6 +65,8 @@ func (e *Engine) Run() ([]Result, error) {
 		return nil, err
 	}
 
+	log.WithField("volumes", len(volumes)).Info("backup")
+
 	sema := make(semaphore.Semaphore, 10)
 	resc := make(chan Result)
 
@@ -85,6 +88,14 @@ func (e *Engine) Run() ([]Result, error) {
 	results := make([]Result, 0, len(volumes))
 
 	for res := range resc {
+		ctx := log.WithField("volume_id", res.VolumeID)
+
+		if res.Err != nil {
+			ctx.WithError(err).Error("backup")
+		} else {
+			ctx.Info("backup")
+		}
+
 		results = append(results, res)
 	}
 
