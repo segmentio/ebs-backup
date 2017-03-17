@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -286,6 +287,7 @@ func TestDeleteErr(t *testing.T) {
 }
 
 type mock struct {
+	ec2iface.EC2API
 	DescribeVolumesFunc   func(*ec2.DescribeVolumesInput) (*ec2.DescribeVolumesOutput, error)
 	DescribeSnapshotsFunc func(*ec2.DescribeSnapshotsInput) (*ec2.DescribeSnapshotsOutput, error)
 	CreateSnapshotFunc    func(*ec2.CreateSnapshotInput) (*ec2.Snapshot, error)
