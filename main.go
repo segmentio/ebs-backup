@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/cli"
@@ -15,7 +16,7 @@ import (
 var (
 	version  = "v0.0.0"
 	name     = flag.String("name", "", "name tags that identify the volumes")
-	device   = flag.String("device", "", "the device name")
+	devices  = flag.String("devices", "", "comma separated list of device names")
 	limit    = flag.Int("limit", 5, "maximum number of snapshots to keep per volume")
 	copyTags = flag.Bool("copy-tags", true, "copy volume tags to the snapshot")
 )
@@ -36,15 +37,15 @@ func main() {
 		log.Fatal("--name must be the volume .Name tag")
 	}
 
-	if *device == "" {
-		log.Fatal("--device must be given")
+	if *devices == "" {
+		log.Fatal("--devices is required")
 	}
 
 	e := engine.New(engine.Config{
 		EC2:      ec2.New(session.New(aws.NewConfig())),
 		Name:     *name,
 		Limit:    *limit,
-		Device:   *device,
+		Device:   split(*devices),
 		CopyTags: *copyTags,
 	})
 
@@ -73,4 +74,14 @@ func main() {
 	}
 
 	os.Exit(code)
+}
+
+func split(s string) []string {
+	var ret []string
+
+	for _, s := range strings.Split(s, ",") {
+		ret = append(ret, strings.TrimSpace(s))
+	}
+
+	return ret
 }

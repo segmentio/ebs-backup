@@ -6,18 +6,11 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/tj/go-sync/semaphore"
 )
-
-// EC2 represents an ec2 api.
-type EC2 interface {
-	CreateSnapshot(*ec2.CreateSnapshotInput) (*ec2.Snapshot, error)
-	DeleteSnapshot(*ec2.DeleteSnapshotInput) (*ec2.DeleteSnapshotOutput, error)
-	DescribeSnapshots(*ec2.DescribeSnapshotsInput) (*ec2.DescribeSnapshotsOutput, error)
-	DescribeVolumes(*ec2.DescribeVolumesInput) (*ec2.DescribeVolumesOutput, error)
-	CreateTags(*ec2.CreateTagsInput) (*ec2.CreateTagsOutput, error)
-}
 
 // byTime sorts snapshots by time.
 type byTime []*ec2.Snapshot
@@ -37,8 +30,8 @@ type Result struct {
 
 // Config is the engine Config.
 type Config struct {
-	EC2      EC2
-	Device   string
+	EC2      ec2iface.EC2API
+	Devices  []string
 	Name     string
 	Limit    int
 	CopyTags bool
@@ -115,7 +108,7 @@ func (e *Engine) volumes() ([]*ec2.Volume, error) {
 	resp, err := e.EC2.DescribeVolumes(&ec2.DescribeVolumesInput{
 		Filters: []*ec2.Filter{
 			filter("attachment.status", "attached"),
-			filter("attachment.device", e.Device),
+			filter("attachment.device", e.Devices...),
 			filter("tag:Name", e.Name),
 		},
 	})
@@ -226,9 +219,9 @@ func (e *Engine) delete(set []*ec2.Snapshot) ([]string, error) {
 }
 
 // filter returns an ec2.Filter with `key`, `value`.
-func filter(key, value string) *ec2.Filter {
+func filter(key string, values ...string) *ec2.Filter {
 	return &ec2.Filter{
 		Name:   &key,
-		Values: []*string{&value},
+		Values: aws.StringSlice(values),
 	}
 }
