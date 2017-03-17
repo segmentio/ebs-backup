@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/apex/go-apex"
 	"github.com/apex/log"
@@ -21,7 +22,7 @@ const (
 
 var env = []string{
 	"VOLUME_NAME",
-	"VOLUME_DEVICE",
+	"VOLUME_DEVICES",
 	"SNAPSHOT_LIMIT",
 	"COPY_TAGS",
 }
@@ -76,9 +77,14 @@ func config() (c engine.Config, err error) {
 		return c, fmt.Errorf("$SNAPSHOT_LIMIT must be more than 1")
 	}
 
+	devices := split(os.Getenv("VOLUME_DEVICES"))
+	if len(devices) == 0 {
+		return c, fmt.Errorf("$VOLUME_DEVICES is required")
+	}
+
 	c.EC2 = ec2.New(session.New(aws.NewConfig()))
 	c.Name = os.Getenv("VOLUME_NAME")
-	c.Device = os.Getenv("VOLUME_DEVICE")
+	c.Devices = devices
 	c.Limit = limit
 	c.CopyTags = copytags
 	return c, nil
@@ -100,4 +106,11 @@ func parseBool(key string) (bool, error) {
 	}
 
 	return v, nil
+}
+
+func split(s string) (ret []string) {
+	for _, s := range strings.Split(s, ",") {
+		ret = append(ret, strings.TrimSpace(s))
+	}
+	return ret
 }
