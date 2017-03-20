@@ -45,7 +45,7 @@ func main() {
 		EC2:      ec2.New(session.New(aws.NewConfig())),
 		Name:     *name,
 		Limit:    *limit,
-		Device:   split(*devices),
+		Devices:  split(*devices),
 		CopyTags: *copyTags,
 	})
 
