@@ -107,7 +107,7 @@ func (e *Engine) Run() ([]Result, error) {
 func (e *Engine) volumes() ([]*ec2.Volume, error) {
 	resp, err := e.EC2.DescribeVolumes(&ec2.DescribeVolumesInput{
 		Filters: []*ec2.Filter{
-			filter("attachment.status", "attached"),
+			filter("status", "in-use"),
 			filter("attachment.device", e.Devices...),
 			filter("tag:Name", e.Name),
 		},
