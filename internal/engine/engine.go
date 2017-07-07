@@ -84,7 +84,7 @@ func (e *Engine) Run() ([]Result, error) {
 		ctx := log.WithField("volume_id", res.VolumeID)
 
 		if res.Err != nil {
-			ctx.WithError(err).Error("backup")
+			ctx.WithError(res.Err).Error("backup")
 		} else {
 			ctx.Info("backup")
 		}
