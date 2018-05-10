@@ -1,0 +1,63 @@
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/segmentio/ebs-backup
+
+    docker:
+      - image: golang
+        environment:
+          ECR_ENABLED: True
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps-{{ checksum "vendor/vendor.json" }}
+
+      - run:
+          name: Configure netrc
+          command: |
+            echo "machine github.com login $GH_LOGIN" > ~/.netrc
+
+      - setup_remote_docker:
+          reusable: true
+
+      - run:
+          name: Dependencies
+          command: |
+            go get -u github.com/kardianos/govendor
+            govendor sync
+
+      - run:
+          name: Test
+          command: |
+            make test
+
+      - save_cache:
+          key: deps-{{ checksum "vendor/vendor.json" }}
+          paths:
+            - vendor/
+
+      - run:
+          name: Deployment
+          command: |
+            make push
+
+      - run:
+          name: TestAWS
+          command: |
+            apt-get update && apt-get -y install unzip
+            curl -sSL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip
+            unzip /tmp/terraform.zip -d /usr/bin
+            go get -u github.com/kardianos/govendor
+            make deps
+            go test -v ./examples/terraform
+
+
+workflows:
+  version: 2
+  run:
+    jobs:
+      - build:
+          filters:
+            tags: { only: /.*/ }
+          context: org-global
