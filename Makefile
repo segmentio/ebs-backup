@@ -3,12 +3,16 @@ V=`git describe --tags --always`
 test:
 	@go test --cover --race ./internal/...
 
-dist:
-	@mkdir -p dist
-	@apex build ebs-backup > dist/lambda.zip
+dist/ebs-backup-lambda: functions/ebs-backup/*.go internal/engine/*.go
+	env GOOS=linux GOARCH=amd64 go build -o dist/ebs-backup-lambda ./functions/ebs-backup
 
-push:
-	@aws-vault exec ops -- aws s3 cp ./dist/lambda.zip s3://segment-lambdas/ebs-backup/$(V).zip
+dist/lambda.zip: dist/ebs-backup-lambda
+	cd dist && zip -u lambda.zip ebs-backup-lambda
+
+dist: dist/lambda.zip
+
+push: dist/lambda.zip
+	@aws-okta exec ops-privileged -- aws s3 cp ./dist/lambda.zip s3://segment-lambdas/ebs-backup/$(V).zip
 
 clean:
 	rm -fr dist
