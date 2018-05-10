@@ -24,6 +24,12 @@ var (
 	sess client.ConfigProvider
 )
 
+type ctxKey int
+
+const (
+	awsSession ctxKey = iota
+)
+
 func getSessionCtx(ctx context.Context) context.Context {
 	sess = session.Must(session.NewSession())
 	assumeRoleARN := os.Getenv("ASSUME_ROLE_ARN")
@@ -37,7 +43,7 @@ func getSessionCtx(ctx context.Context) context.Context {
 			),
 		)
 	}
-	return context.WithValue(ctx, "session", sess)
+	return context.WithValue(ctx, awsSession, sess)
 }
 
 func TestCreateSnapshot(t *testing.T) {
@@ -46,7 +52,7 @@ func TestCreateSnapshot(t *testing.T) {
 
 	ctx := getSessionCtx(context.Background())
 
-	lambdaClient := lambda.New(ctx.Value("session").(client.ConfigProvider))
+	lambdaClient := lambda.New(ctx.Value(awsSession).(client.ConfigProvider))
 
 	output, err := lambdaClient.Invoke(&lambda.InvokeInput{
 		FunctionName:   aws.String(lambdaFunctionName()),
@@ -73,7 +79,7 @@ func TestCreateSnapshot(t *testing.T) {
 		}
 	})
 
-	ec2Client := ec2.New(ctx.Value("session").(client.ConfigProvider))
+	ec2Client := ec2.New(ctx.Value(awsSession).(client.ConfigProvider))
 
 	t.Run("Snapshot exists", func(t *testing.T) {
 		resp, err := ec2Client.DescribeSnapshotsWithContext(ctx,
@@ -109,7 +115,7 @@ func TestCreateSnapshot(t *testing.T) {
 }
 
 func deleteSnapshot(ctx context.Context, snapshotID string) {
-	ec2Client := ec2.New(ctx.Value("session").(client.ConfigProvider))
+	ec2Client := ec2.New(ctx.Value(awsSession).(client.ConfigProvider))
 	ec2Client.DeleteSnapshotWithContext(ctx, &ec2.DeleteSnapshotInput{
 		SnapshotId: aws.String(snapshotID),
 	})
