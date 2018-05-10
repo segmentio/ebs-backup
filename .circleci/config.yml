@@ -30,6 +30,8 @@ jobs:
       - run:
           name: Test
           command: |
+            go get -u github.com/kardianos/govendor
+            govendor sync
             make test
 
       - save_cache:
