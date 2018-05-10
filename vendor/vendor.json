@@ -304,10 +304,9 @@
 		},
 		{
 			"checksumSHA1": "GtamqiJoL7PGHsN454AoffBFMa8=",
-			"origin": "github.com/gruntwork-io/terratest/vendor/golang.org/x/net/context",
 			"path": "golang.org/x/net/context",
-			"revision": "6156c6ae0ed16a5110da2309530860c71a974035",
-			"revisionTime": "2018-05-05T23:30:44Z"
+			"revision": "c73622c77280266305273cb545f54516ced95b93",
+			"revisionTime": "2017-06-11T01:16:46Z"
 		}
 	],
 	"rootPath": "github.com/segmentio/ebs-backup"
