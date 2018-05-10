@@ -1,5 +1,8 @@
 V=`git describe --tags --always`
 
+export LAMBDA_S3_BUCKET := segment-lambdas
+export LAMBDA_S3_KEY := ebs-backup/$(V).zip
+
 ifdef CI
 AWS_WRAPPER :=
 else
@@ -18,7 +21,7 @@ dist/lambda.zip: dist/ebs-backup-lambda
 dist: dist/lambda.zip
 
 push: dist/lambda.zip
-	$(AWS_WRAPPER) aws s3 cp ./dist/lambda.zip s3://segment-lambdas/ebs-backup/$(V).zip
+	$(AWS_WRAPPER) aws s3 cp ./dist/lambda.zip s3://$(LAMBDA_S3_BUCKET)/$(LAMBDA_S3_KEY)
 
 clean:
 	rm -fr dist
