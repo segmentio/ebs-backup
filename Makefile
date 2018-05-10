@@ -12,6 +12,9 @@ endif
 test:
 	go test --cover --race ./internal/...
 
+test-aws:
+	go test -v ./test/aws
+
 dist/ebs-backup-lambda: functions/ebs-backup/*.go internal/engine/*.go
 	env GOOS=linux GOARCH=amd64 go build -o dist/ebs-backup-lambda ./functions/ebs-backup
 
@@ -26,4 +29,4 @@ push: dist/lambda.zip
 clean:
 	rm -fr dist
 
-.PHONY: test clean
+.PHONY: test test-aws clean
