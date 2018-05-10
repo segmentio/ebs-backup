@@ -24,11 +24,7 @@ jobs:
       - run:
           name: Dependencies
           command: |
-            curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py
-            pip install awscli==1.15.10
-            apt-get update && apt-get -y install zip unzip
-            curl -sSL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip
-            unzip /tmp/terraform.zip -d /usr/bin
+            apt-get update
             go get -u github.com/kardianos/govendor
             govendor sync
 
@@ -45,12 +41,17 @@ jobs:
       - run:
           name: Deployment
           command: |
+            curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py
+            pip install awscli==1.15.10
+            apt-get update && apt-get -y install zip unzip
             make push
 
       - run:
           name: TestAWS
           command: |
-            go test -v ./examples/terraform
+            curl -sSL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip
+            unzip /tmp/terraform.zip -d /usr/bin
+            go test -v ./test/aws
 
 
 workflows:
