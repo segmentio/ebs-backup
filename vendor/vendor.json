@@ -231,6 +231,12 @@
 			"revisionTime": "2018-05-08T16:49:31Z"
 		},
 		{
+			"checksumSHA1": "CSPbwbyzqA6sfORicn4HFtIhF/c=",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "8991bc29aa16c548c550c7ff78260e27b9ab7c73",
+			"revisionTime": "2018-02-21T22:46:20Z"
+		},
+		{
 			"checksumSHA1": "KIui02MZXkQsIP+Oir4Iv/tq/SU=",
 			"path": "github.com/go-ini/ini",
 			"revision": "d3de07a94d22b4a0972deb4b96d790c2c0ce8333",
@@ -241,6 +247,30 @@
 			"path": "github.com/go-logfmt/logfmt",
 			"revision": "390ab7935ee28ec6b286364bba9b4dd6410cb3d5",
 			"revisionTime": "2016-11-15T14:25:13Z"
+		},
+		{
+			"checksumSHA1": "VK7r8j2WaSfO6dGcaLCgJ6bwCaY=",
+			"path": "github.com/gruntwork-io/terratest/modules/logger",
+			"revision": "6156c6ae0ed16a5110da2309530860c71a974035",
+			"revisionTime": "2018-05-05T23:30:44Z"
+		},
+		{
+			"checksumSHA1": "LALcgmYOMv3ZppMCcVyrxjUMK9k=",
+			"path": "github.com/gruntwork-io/terratest/modules/retry",
+			"revision": "6156c6ae0ed16a5110da2309530860c71a974035",
+			"revisionTime": "2018-05-05T23:30:44Z"
+		},
+		{
+			"checksumSHA1": "6OMCoCqi6obg3hdsyg6OyoCrRis=",
+			"path": "github.com/gruntwork-io/terratest/modules/shell",
+			"revision": "6156c6ae0ed16a5110da2309530860c71a974035",
+			"revisionTime": "2018-05-05T23:30:44Z"
+		},
+		{
+			"checksumSHA1": "MykEU4wThEVTrtict9CBVEo5c5M=",
+			"path": "github.com/gruntwork-io/terratest/modules/terraform",
+			"revision": "6156c6ae0ed16a5110da2309530860c71a974035",
+			"revisionTime": "2018-05-05T23:30:44Z"
 		},
 		{
 			"checksumSHA1": "0ZrwvB6KoGPj2PoDNSEJwxQ6Mog=",
@@ -261,10 +291,23 @@
 			"revisionTime": "2017-05-05T04:36:39Z"
 		},
 		{
+			"checksumSHA1": "6LwXZI7kXm1C0h4Ui0Y52p9uQhk=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "c679ae2cc0cb27ec3293fea7e254e47386f05d69",
+			"revisionTime": "2018-03-14T08:05:35Z"
+		},
+		{
 			"checksumSHA1": "vTMNlSkytg8eVMjhTHQd5GMScdQ=",
 			"path": "github.com/tj/go-sync/semaphore",
 			"revision": "8448302468e84b34d4b949808dd5874149be15d1",
 			"revisionTime": "2016-01-19T18:14:31Z"
+		},
+		{
+			"checksumSHA1": "GtamqiJoL7PGHsN454AoffBFMa8=",
+			"origin": "github.com/gruntwork-io/terratest/vendor/golang.org/x/net/context",
+			"path": "golang.org/x/net/context",
+			"revision": "6156c6ae0ed16a5110da2309530860c71a974035",
+			"revisionTime": "2018-05-05T23:30:44Z"
 		}
 	],
 	"rootPath": "github.com/segmentio/ebs-backup"
