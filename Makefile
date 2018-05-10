@@ -1,4 +1,4 @@
-V=`git describe --tags --always`
+V := $(shell git describe --tags --always)
 
 export LAMBDA_S3_BUCKET := segment-lambdas
 export LAMBDA_S3_KEY := ebs-backup/$(V).zip
