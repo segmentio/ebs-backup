@@ -119,3 +119,7 @@ module "scheduled_backup" {
 output "backup_function_name" {
   value = "${module.scheduled_backup.backup_function_name}"
 }
+
+output "backup_function_arn" {
+  value = "${module.scheduled_backup.backup_function_arn}"
+}
