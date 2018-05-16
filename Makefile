@@ -1,7 +1,7 @@
 V := $(shell git describe --tags --always)
 
-export LAMBDA_S3_BUCKET := segment-lambdas
-export LAMBDA_S3_KEY := ebs-backup/ebs-backup-lambda-$(V).zip
+export LAMBDA_S3_BUCKET ?= segment-lambdas
+export LAMBDA_S3_KEY ?= ebs-backup/ebs-backup-lambda-$(V).zip
 export CIRCLE_WORKFLOW_ID ?= $(shell uuidgen | tr '[A-F]' '[a-f]')
 
 

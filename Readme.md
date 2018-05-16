@@ -1,47 +1,48 @@
-# ebs-backup - a small program to backup ebs volumes by tag names.
+# ebs-backup - a small program to snapshot EBS volumes by tag
 
 ## Features
 
-- Keep up to N snapshots
-- Copies volume tags
+- Keeps up to _N_ snapshots
+- Copies tags from volumes to snapshots
 - Safeguards against "pending" snapshots
-- Flexible deployment (Lambda/ECS/EC2 etc..)
+- Available both as a command-line program and Lambda function
 
-## Example
+## Command-line example
 
-Backup volumes tagged with `Name=db-*` and keep up to 3 snapshots for each volume.
+Back up attached volumes tagged with `Name=db-*` and attached to `/dev/xvdf`,
+retaining up to 3 snapshots per volume.
 
 ```bash
 $ ebs-backup --name 'db-*' --device /dev/xvdf --limit 3
 ```
 
-The program will lookup all volumes that match the following:
+The program will back up all volumes that match the following criteria:
 
 - tagged with `Name = "db-*"`
 - attachment state is `"attached"`
 - attachment device is `"/dev/xvdf"`
 - have no "pending" snapshots being created
 
+## Testing
+
+A full end-to-end test suite is located in `test/aws` subdirectory.  See the
+`test_aws` target in the `Makefile`.
+
 ## Deployment
 
-This service is deployed by Terraform.
+The Lambda function is automatically uploaded by CircleCI to S3 at each build.
+The filename pattern is as follows:
+`s3://${BUCKET_NAME}/ebs-backup/ebs-backup-lambda-${VERSION}.zip`
 
-Create a tag for your new release :
+## Terraform module
 
-```bash
-git tag v0.1.1
-```
+A useful Terraform module for deploying ebs-backup on AWS is located in the
+`terraform/scheduled_backup` subdirectory. See the `input.tf` file for supported
+variables.
 
-To build a new version :
+## Locating the S3 Lambda function
 
-```bash
-make dist
-```
+S3 bucket and key locations for the most recent release can be found in Parameter Store in the segment-ops AWS account.  These can be useful for provisioning.  See the `update_parameter_store` target in the `Makefile`.
 
-Push to s3 :
-
-```bash
-make push
-```
-
-Then update Terraform : https://github.com/segment-infra/services/blob/master/dedupe/main.tf#L186
+* S3 bucket: segment/ebs_backup/lambda_s3_bucket
+* S3 key: segment/ebs_backup/lambda_s3_key
