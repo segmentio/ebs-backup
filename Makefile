@@ -27,7 +27,11 @@ push: dist/lambda.zip
 test_aws:
 	$(AWS_EXEC_DEV_WRAPPER) go test -v ./test/aws
 
+update_parameter_store:
+	$(AWS_EXEC_OPS_WRAPPER) aws ssm put-parameter --name segment/ebs_backup/lambda_s3_bucket --type String --value $(LAMBDA_S3_BUCKET)
+	$(AWS_EXEC_OPS_WRAPPER) aws ssm put-parameter --name segment/ebs_backup/lambda_s3_key --type String --value $(LAMBDA_S3_KEY)
+
 clean:
 	rm -fr dist
 
-.PHONY: test test_aws clean
+.PHONY: test test_aws clean update_parameter_store

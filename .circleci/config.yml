@@ -2,56 +2,63 @@ version: 2
 jobs:
   build:
     working_directory: /go/src/github.com/segmentio/ebs-backup
-
     docker:
       - image: golang
         environment:
           ECR_ENABLED: True
-
     steps:
       - checkout
       - restore_cache:
           key: deps-{{ checksum "vendor/vendor.json" }}
-
       - run:
           name: Configure netrc
           command: |
             echo "machine github.com login $GH_LOGIN" > ~/.netrc
-
       - setup_remote_docker:
           reusable: true
-
       - run:
           name: Dependencies
           command: |
             apt-get update
             go get -u github.com/kardianos/govendor
             govendor sync
-
       - run:
           name: Test
           command: |
             make test
-
       - save_cache:
           key: deps-{{ checksum "vendor/vendor.json" }}
           paths:
             - vendor/
-
       - run:
-          name: Deployment
+          name: Install AWS CLI
           command: |
             curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py
             pip install awscli==1.15.10
+      - run:
+          name: Compile Lambda functions and upload to S3
             apt-get update && apt-get -y install zip unzip
             make push
-
       - run:
           name: TestAWS
           command: |
             curl -sSL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip
             unzip /tmp/terraform.zip -d /usr/bin
             make test_aws
+
+  update_parameter_store:
+    working_directory: /go/src/github.com/segmentio/ebs-backup
+    steps:
+      - checkout
+      - run:
+          name: Install AWS CLI
+          command: |
+            curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py
+            pip install awscli==1.15.10
+      - run:
+          name: Update Parameter Store with version
+          command: |
+            make update_parameter_store
 
 
 workflows:
@@ -62,3 +69,8 @@ workflows:
           filters:
             tags: { only: /.*/ }
           context: org-global
+      - update_parameter_store:
+          requires: build
+          filters:
+            branches: { only: master }
+            tags: { only: /^v.*/ }
