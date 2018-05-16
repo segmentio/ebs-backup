@@ -1,2 +1,8 @@
 vendor/*/
 dist/
+*~
+*.sw[a-z]
+*.zip
+.terraform/
+*.tfstate
+*.backup
