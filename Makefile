@@ -1,7 +1,7 @@
 V := $(shell git describe --tags --always)
 
 export LAMBDA_S3_BUCKET := segment-lambdas
-export LAMBDA_S3_KEY := ebs-backup/$(V).zip
+export LAMBDA_S3_KEY := ebs-backup/ebs-backup-lambda-$(V).zip
 export CIRCLE_WORKFLOW_ID ?= $(shell uuidgen | tr '[A-F]' '[a-f]')
 
 
@@ -28,8 +28,8 @@ test_aws:
 	$(AWS_EXEC_DEV_WRAPPER) go test -v ./test/aws
 
 update_parameter_store:
-	$(AWS_EXEC_OPS_WRAPPER) aws ssm put-parameter --name segment/ebs_backup/lambda_s3_bucket --type String --value $(LAMBDA_S3_BUCKET)
-	$(AWS_EXEC_OPS_WRAPPER) aws ssm put-parameter --name segment/ebs_backup/lambda_s3_key --type String --value $(LAMBDA_S3_KEY)
+	$(AWS_EXEC_OPS_WRAPPER) aws ssm put-parameter --overwrite --name /segment/ebs_backup/lambda_s3_bucket --type String --value $(LAMBDA_S3_BUCKET)
+	$(AWS_EXEC_OPS_WRAPPER) aws ssm put-parameter --overwrite --name /segment/ebs_backup/lambda_s3_key --type String --value $(LAMBDA_S3_KEY)
 
 clean:
 	rm -fr dist

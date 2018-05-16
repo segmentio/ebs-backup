@@ -20,6 +20,7 @@ jobs:
           name: Dependencies
           command: |
             apt-get update
+            apt-get -y install zip unzip
             go get -u github.com/kardianos/govendor
             govendor sync
       - run:
@@ -37,7 +38,7 @@ jobs:
             pip install awscli==1.15.10
       - run:
           name: Compile Lambda functions and upload to S3
-            apt-get update && apt-get -y install zip unzip
+          command: |
             make push
       - run:
           name: TestAWS
@@ -48,6 +49,8 @@ jobs:
 
   update_parameter_store:
     working_directory: /go/src/github.com/segmentio/ebs-backup
+    docker:
+      - image: golang
     steps:
       - checkout
       - run:
@@ -66,11 +69,13 @@ workflows:
   run:
     jobs:
       - build:
+          context: org-global
           filters:
             tags: { only: /.*/ }
-          context: org-global
       - update_parameter_store:
-          requires: build
+          context: org-global
+          requires:
+            - build
           filters:
             branches: { only: master }
             tags: { only: /^v.*/ }
