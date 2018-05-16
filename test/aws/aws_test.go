@@ -1,7 +1,6 @@
 package aws_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -20,42 +20,18 @@ import (
 	"github.com/segmentio/ebs-backup/internal/handler"
 )
 
-var (
-	sess client.ConfigProvider
-)
-
-type ctxKey int
-
-const (
-	awsSession ctxKey = iota
-)
-
-func getSessionCtx(ctx context.Context) context.Context {
-	sess = session.Must(session.NewSession())
-	assumeRoleARN := os.Getenv("ASSUME_ROLE_ARN")
-	if assumeRoleARN != "" {
-		// Replace session with one configured to assume role
-		sess = session.Must(
-			session.NewSession(
-				aws.NewConfig().WithCredentials(
-					stscreds.NewCredentials(sess, assumeRoleARN),
-				),
-			),
-		)
-	}
-	return context.WithValue(ctx, awsSession, sess)
-}
-
 func TestCreateSnapshot(t *testing.T) {
+	sess := getAWSSession()
+
 	defer terraform.Destroy(t, tfOpts())
 	terraform.InitAndApply(t, tfOpts())
 
-	ctx := getSessionCtx(context.Background())
+	backupFunctionName := terraform.Output(t, tfOpts(), "backup_function_name")
 
-	lambdaClient := lambda.New(ctx.Value(awsSession).(client.ConfigProvider))
+	lambdaClient := lambda.New(sess)
 
 	output, err := lambdaClient.Invoke(&lambda.InvokeInput{
-		FunctionName:   aws.String(lambdaFunctionName()),
+		FunctionName:   aws.String(backupFunctionName),
 		InvocationType: aws.String("RequestResponse"),
 	})
 	if err != nil {
@@ -70,7 +46,7 @@ func TestCreateSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := range resp {
-		defer deleteSnapshot(ctx, resp[i].SnapshotID)
+		defer deleteSnapshot(sess, resp[i].SnapshotID)
 	}
 
 	t.Run("Single snapshot created", func(t *testing.T) {
@@ -79,10 +55,10 @@ func TestCreateSnapshot(t *testing.T) {
 		}
 	})
 
-	ec2Client := ec2.New(ctx.Value(awsSession).(client.ConfigProvider))
+	ec2Client := ec2.New(sess)
 
 	t.Run("Snapshot exists", func(t *testing.T) {
-		resp, err := ec2Client.DescribeSnapshotsWithContext(ctx,
+		resp, err := ec2Client.DescribeSnapshots(
 			&ec2.DescribeSnapshotsInput{
 				SnapshotIds: aws.StringSlice([]string{resp[0].SnapshotID}),
 			},
@@ -96,7 +72,7 @@ func TestCreateSnapshot(t *testing.T) {
 
 		t.Run("Snapshot has proper tags", func(t *testing.T) {
 			tags := map[string]string{
-				"Name":    lambdaFunctionName(),
+				"Name":    nameTag(),
 				"Creator": buildUser(),
 			}
 			for k, v := range tags {
@@ -114,9 +90,9 @@ func TestCreateSnapshot(t *testing.T) {
 	})
 }
 
-func deleteSnapshot(ctx context.Context, snapshotID string) {
-	ec2Client := ec2.New(ctx.Value(awsSession).(client.ConfigProvider))
-	ec2Client.DeleteSnapshotWithContext(ctx, &ec2.DeleteSnapshotInput{
+func deleteSnapshot(sess client.ConfigProvider, snapshotID string) {
+	ec2Client := ec2.New(sess)
+	ec2Client.DeleteSnapshot(&ec2.DeleteSnapshotInput{
 		SnapshotId: aws.String(snapshotID),
 	})
 }
@@ -130,7 +106,7 @@ func envMust(keys ...string) (val string) {
 	panic(fmt.Sprintf("%s must be set", strings.Join(keys, " or ")))
 }
 
-func lambdaFunctionName() string {
+func nameTag() string {
 	return "EBSBackupTest-" + envMust("CIRCLE_WORKFLOW_ID")
 }
 
@@ -141,14 +117,40 @@ func buildUser() string {
 func tfOpts() *terraform.Options {
 	return &terraform.Options{
 		Vars: map[string]interface{}{
-			"build_username":       buildUser(),
-			"workflow_id":          envMust("CIRCLE_WORKFLOW_ID"),
-			"lambda_s3_bucket":     envMust("LAMBDA_S3_BUCKET"),
-			"lambda_s3_key":        envMust("LAMBDA_S3_KEY"),
-			"lambda_function_name": lambdaFunctionName(),
-			"name":                 lambdaFunctionName(),
+			"build_username":   buildUser(),
+			"workflow_id":      envMust("CIRCLE_WORKFLOW_ID"),
+			"lambda_s3_bucket": envMust("LAMBDA_S3_BUCKET"),
+			"lambda_s3_key":    envMust("LAMBDA_S3_KEY"),
+			"name":             nameTag(),
 
 			"assume_role_arn": os.Getenv("ASSUME_ROLE_ARN"),
 		},
 	}
+}
+
+func getAWSSession() *session.Session {
+	var region string
+
+	sess := session.Must(session.NewSession())
+
+	// Detect region automatically if possible
+	client := ec2metadata.New(sess)
+	doc, err := client.GetInstanceIdentityDocument()
+	if err == nil {
+		sess.Config.Region = aws.String(doc.Region)
+	}
+
+	assumeRoleARN := os.Getenv("ASSUME_ROLE_ARN")
+	if assumeRoleARN != "" {
+		// Replace session with one configured to assume role
+		sess = session.Must(
+			session.NewSession(
+				aws.NewConfig().WithCredentials(
+					stscreds.NewCredentials(sess, assumeRoleARN),
+				).WithRegion(region),
+			),
+		)
+	}
+
+	return sess
 }

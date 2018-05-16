@@ -9,8 +9,6 @@ variable "name" {}
 variable "lambda_s3_bucket" {}
 variable "lambda_s3_key" {}
 
-variable "lambda_function_name" {}
-
 variable "build_username" {}
 
 variable "workflow_id" {}
@@ -62,81 +60,7 @@ data "aws_ami" "linux" {
 
 locals {
   availability_zone = "${data.aws_availability_zones.available.names[0]}"
-}
-
-resource "aws_iam_role" "ebs_backup" {
-  name = "${var.name}"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "lambda.amazonaws.com"
-            },
-            "Effect": "Allow"
-        }
-    ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy" "ebs_backup" {
-  name = "${var.name}"
-  role = "${aws_iam_role.ebs_backup.name}"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeVolumes",
-                "ec2:DescribeSnapshots",
-                "ec2:CreateSnapshot",
-                "ec2:CreateTags",
-                "ec2:DeleteSnapshot"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
-}
-
-resource "aws_lambda_function" "ebs_backup" {
-  function_name = "${var.lambda_function_name}"
-  handler       = "ebs-backup-lambda"
-  role          = "${aws_iam_role.ebs_backup.arn}"
-  s3_bucket     = "${var.lambda_s3_bucket}"
-  s3_key        = "${var.lambda_s3_key}"
-  runtime       = "go1.x"
-
-  environment {
-    variables {
-      COPY_TAGS      = "true"
-      SNAPSHOT_LIMIT = "2"
-      VOLUME_DEVICES = "/dev/xvdf"
-      VOLUME_NAME    = "${var.name}"
-    }
-  }
-
-  tags {
-    Name    = "${var.name}"
-    Creator = "${var.build_username}"
-  }
+  device_name       = "/dev/xvdf"
 }
 
 resource "aws_vpc" "test" {
@@ -179,5 +103,19 @@ resource "aws_ebs_volume" "data" {
 resource "aws_volume_attachment" "data" {
   volume_id   = "${aws_ebs_volume.data.id}"
   instance_id = "${aws_instance.test.id}"
-  device_name = "/dev/xvdf"
+  device_name = "${local.device_name}"
+}
+
+module "scheduled_backup" {
+  source = "../../terraform/scheduled_backup"
+
+  lambda_s3_bucket  = "${var.lambda_s3_bucket}"
+  lambda_s3_key     = "${var.lambda_s3_key}"
+  volume_name       = "${var.name}"
+  device_names      = ["${local.device_name}"]
+  enable_event_rule = false
+}
+
+output "backup_function_name" {
+  value = "${module.scheduled_backup.backup_function_name}"
 }
