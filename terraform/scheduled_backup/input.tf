@@ -1,11 +1,23 @@
+variable "lambda_s3_bucket_ssm_parameter" {
+  type        = "string"
+  default     = "/segment/ebs_backup/lambda_s3_bucket"
+  description = "SSM parameter under which name of Lambda S3 bucket will be found"
+}
+
+variable "lambda_s3_key_ssm_parameter" {
+  type        = "string"
+  default     = "/segment/ebs_backup/lambda_s3_key"
+  description = "SSM parameter under which name of Lambda S3 key will be found"
+}
+
 variable "lambda_s3_bucket" {
   type        = "string"
-  description = "S3 bucket containing EBS backup Lambda function"
+  description = "S3 bucket containing EBS backup Lambda function.  If specified, will override any value found in the Parameter Store."
 }
 
 variable "lambda_s3_key" {
   type        = "string"
-  description = "S3 key pointing to EBS backup Lambda function"
+  description = "S3 key pointing to EBS backup Lambda function.  If specified, will override any value found in the Parameter Store."
 }
 
 variable "copy_tags" {
