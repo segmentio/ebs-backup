@@ -1,11 +1,11 @@
 data "aws_ssm_parameter" "lambda_s3_bucket" {
-  count = "${var.lambda_s3_bucket_ssm_parameter == "" ? 1 : 0}"
-  name  = "/segment/ebs_backup/lambda_s3_bucket"
+  count = "${(var.lambda_s3_bucket != "" || var.lambda_s3_bucket_ssm_parameter == "") ? 0 : 1}"
+  name  = "${var.lambda_s3_bucket_ssm_parameter}"
 }
 
 data "aws_ssm_parameter" "lambda_s3_key" {
-  count = "${var.lambda_s3_key_ssm_parameter == "" ? 1 : 0}"
-  name  = "/segment/ebs_backup/lambda_s3_key"
+  count = "${(var.lambda_s3_key != "" || var.lambda_s3_key_ssm_parameter == "") ? 0 : 1}"
+  name  = "${var.lambda_s3_key_ssm_parameter}"
 }
 
 resource "aws_lambda_function" "ebs_backup" {
