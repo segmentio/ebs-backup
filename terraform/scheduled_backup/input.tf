@@ -13,11 +13,13 @@ variable "lambda_s3_key_ssm_parameter" {
 variable "lambda_s3_bucket" {
   type        = "string"
   description = "S3 bucket containing EBS backup Lambda function.  If specified, will override any value found in the Parameter Store."
+  default     = ""
 }
 
 variable "lambda_s3_key" {
   type        = "string"
   description = "S3 key pointing to EBS backup Lambda function.  If specified, will override any value found in the Parameter Store."
+  default     = ""
 }
 
 variable "copy_tags" {
