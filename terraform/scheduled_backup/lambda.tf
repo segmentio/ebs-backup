@@ -9,7 +9,7 @@ data "aws_ssm_parameter" "lambda_s3_key" {
 }
 
 resource "aws_lambda_function" "ebs_backup" {
-  function_name = "ebs-backup"
+  function_name = "${substr("ebs-backup-${var.volume_name}-${replace(join("-", var.device_names), "/\\/dev\\//", "")}", 0, 64)}"
   handler       = "ebs-backup-lambda"
   role          = "${aws_iam_role.ebs_backup.arn}"
   s3_bucket     = "${coalesce(var.lambda_s3_bucket, join("", data.aws_ssm_parameter.lambda_s3_bucket.*.value))}"
