@@ -33,6 +33,12 @@ variable "frequency" {
   default     = "2 hours"
 }
 
+variable "timeout" {
+  type        = "string"
+  description = "Maximum runtime for backup Lambda function, in seconds"
+  default     = 300
+}
+
 variable "snapshot_limit" {
   default     = 2
   description = "Number of most recent snapshots to retain"

@@ -20,6 +20,7 @@ resource "aws_lambda_function" "ebs_backup" {
   s3_bucket     = "${coalesce(var.lambda_s3_bucket, join("", data.aws_ssm_parameter.lambda_s3_bucket.*.value))}"
   s3_key        = "${coalesce(var.lambda_s3_key, join("", data.aws_ssm_parameter.lambda_s3_key.*.value))}"
   runtime       = "go1.x"
+  timeout       = "${var.timeout}"
 
   environment {
     variables {
