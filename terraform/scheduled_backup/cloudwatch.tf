@@ -5,10 +5,11 @@ resource "aws_cloudwatch_event_rule" "ebs_backup" {
 
   description         = "Back up ${var.volume_name} every ${var.frequency}"
   schedule_expression = "rate(${var.frequency})"
-  is_enabled          = "${var.enable_event_rule}"
+  is_enabled          = var.enable_event_rule
 }
 
 resource "aws_cloudwatch_event_target" "ebs_backup" {
-  rule = "${aws_cloudwatch_event_rule.ebs_backup.name}"
-  arn  = "${aws_lambda_function.ebs_backup.arn}"
+  rule = aws_cloudwatch_event_rule.ebs_backup.name
+  arn  = aws_lambda_function.ebs_backup.arn
 }
+
